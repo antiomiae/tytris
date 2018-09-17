@@ -138,15 +138,64 @@ const api = gl => {
       if (!this.uniforms[name]) {
         throw `Program: No active uniform named ${name} in program`
       }
+
+
+    }
+  }
+
+  const getComponentType = (glType) => {
+    switch (glType) {
+      case (gl.FLOAT):
+      case (gl.FLOAT_VEC2):
+      case (gl.FLOAT_VEC3):
+      case (gl.FLOAT_VEC4):
+      case (gl.FLOAT_MAT2):
+      case (gl.FLOAT_MAT3):
+      case (gl.FLOAT_MAT4):
+        return gl.FLOAT
+
+      case (gl.BOOL):
+      case (gl.BOOL_VEC2):
+      case (gl.BOOL_VEC3):
+      case (gl.BOOL_VEC4):
+        return gl.BOOL
+
+      case (gl.INT):
+      case (gl.INT_VEC2):
+      case (gl.INT_VEC3):
+      case (gl.INT_VEC4):
+        return gl.INT
+
     }
   }
 
   /**
    * Constructs Vertex Array Object with each attribute
-   * @param {!WeGLPogram} program
+   * @param {!Program} program
    */
   const buildVao = (program) => {
+    const vao = gl.createVertexArray()
+    gl.bindVertexArray(vao)
 
+    const out = {
+      vao,
+      buffers: {}
+    }
+
+    Object.keys(program.attributes).forEach(attrName => {
+      const buffer = gl.createBuffer()
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+
+      const attribute = program.attributes[attrName]
+      console.log(`Attribute ${attrName} type = ${getGLConstantNames(attribute.type)}`)
+
+      gl.enableVertexAttribArray(attribute.location)
+      gl.vertexAttribPointer(attribute.location, attribute.size, getComponentType(attribute.type), false, 0, 0)
+
+      out.buffers[attrName] = buffer
+    });
+
+    return out
   }
 
   return {
@@ -156,7 +205,8 @@ const api = gl => {
     enumerateAttributes,
     getGLConstantNames,
     gl,
-    Program
+    Program,
+    buildVao
   }
 }
 

@@ -43,6 +43,9 @@ const bootstrap = () => {
       }
       `
   )
+
+  const vao = api.buildVao(p)
+  console.log(vao)
 }
 
 window.onload = bootstrap
