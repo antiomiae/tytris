@@ -103,10 +103,10 @@ const api = gl => {
     return out
   }
 
-  const getGlConstantNames = (code) => {
-    if (!getGlConstantNames.nameTable) {
+  const getGLConstantNames = (code) => {
+    if (!getGLConstantNames.nameTable) {
       const m = new Map()
-      getGlConstantNames.nameTable = m;
+      getGLConstantNames.nameTable = m;
 
       const glConstantRegex = /[A-Z][A-Z_0-9]+/
 
@@ -124,7 +124,7 @@ const api = gl => {
       })
     }
 
-    return getGlConstantNames.nameTable.get(code)
+    return getGLConstantNames.nameTable.get(code)
   }
 
   class Program {
@@ -132,6 +132,12 @@ const api = gl => {
       this._glProgram = createProgram(compileShader(vertetxShaderSource, gl.VERTEX_SHADER), compileShader(framgentShaderSource, gl.FRAGMENT_SHADER))
       this.attributes = enumerateAttributes(this._glProgram)
       this.uniforms = enumerateUniforms(this._glProgram)
+    }
+
+    setUniform(name) {
+      if (!this.uniforms[name]) {
+        throw `Program: No active uniform named ${name} in program`
+      }
     }
   }
 
@@ -148,7 +154,7 @@ const api = gl => {
     createProgram,
     enumerateUniforms,
     enumerateAttributes,
-    getGlConstantNames,
+    getGLConstantNames,
     gl,
     Program
   }
