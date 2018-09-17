@@ -2,6 +2,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin'); //installed via npm
 const webpack = require('webpack'); //to access built-in plugins
 
 module.exports = {
+  devtool: 'cheap-module-source-map',
   module: {
     rules: [
       { test: /\.txt$/, use: 'raw-loader' }
