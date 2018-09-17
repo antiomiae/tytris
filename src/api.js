@@ -7,12 +7,12 @@ const api = gl => {
    *     FRAGMENT_SHADER.
    * @return {!WebGLShader} The shader.
    */
-  function compileShader(shaderSource, shaderType) {
+  const compileShader = (shaderSource, shaderType) => {
     // Create the shader object
     const shader = gl.createShader(shaderType)
 
     // Set the shader source code.
-    gl.shaderSource(shader, shaderSource)
+    gl.shaderSource(shader, shaderSource.trim())
 
     // Compile the shader
     gl.compileShader(shader)
@@ -34,7 +34,7 @@ const api = gl => {
    * @param {!WebGLShader} fragmentShader A fragment shader.
    * @return {!WebGLProgram} A program.
    */
-  function createProgram(vertexShader, fragmentShader) {
+  const createProgram = (vertexShader, fragmentShader) => {
     // create a program.
     const program = gl.createProgram()
 
@@ -55,9 +55,102 @@ const api = gl => {
     return program
   }
 
+  /**
+   *
+   * @param {!WebGLProgram} program
+   * @return {!Object} Object describing
+   */
+  const enumerateUniforms = (program) => {
+    const maxUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS)
+    const out = {}
+
+    for (let i = 0; i < maxUniforms; i++) {
+      const uniformInfo = gl.getActiveUniform(program, i)
+      const location = gl.getUniformLocation(program, uniformInfo.name)
+
+      out[uniformInfo.name] = {
+        name: uniformInfo.name,
+        size: uniformInfo.size,
+        type: uniformInfo.type,
+        location
+      }
+    }
+
+    return out
+  }
+
+  /**
+   *
+   * @param {!WebGLProgram} program
+   * @return {!Object} Object describing
+   */
+  const enumerateAttributes = (program) => {
+    const maxAttributes = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES)
+    const out = {}
+
+    for (let i = 0; i < maxAttributes; i++) {
+      const attribInfo = gl.getActiveAttrib(program, i)
+      const location = gl.getAttribLocation(program, attribInfo.name)
+
+      out[attribInfo.name] = {
+        name: attribInfo.name,
+        size: attribInfo.size,
+        type: attribInfo.type,
+        location
+      }
+    }
+
+    return out
+  }
+
+  const getGlConstantNames = (code) => {
+    if (!getGlConstantNames.nameTable) {
+      const m = new Map()
+      getGlConstantNames.nameTable = m;
+
+      const glConstantRegex = /[A-Z][A-Z_0-9]+/
+
+      const props = Object.keys(WebGL2RenderingContext)
+
+      props.forEach(prop => {
+        const val = gl[prop]
+
+        if (glConstantRegex.test(prop) && Number.isInteger(val)) {
+          if (!m.has(val)) {
+            m.set(val, [])
+          }
+          m.get(val).push(prop)
+        }
+      })
+    }
+
+    return getGlConstantNames.nameTable.get(code)
+  }
+
+  class Program {
+    constructor(vertetxShaderSource, framgentShaderSource) {
+      this._glProgram = createProgram(compileShader(vertetxShaderSource, gl.VERTEX_SHADER), compileShader(framgentShaderSource, gl.FRAGMENT_SHADER))
+      this.attributes = enumerateAttributes(this._glProgram)
+      this.uniforms = enumerateUniforms(this._glProgram)
+    }
+  }
+
+  /**
+   * Constructs Vertex Array Object with each attribute
+   * @param {!WeGLlPogram} program
+   */
+  const buildVao = (program) => {
+
+  }
+
   return {
     compileShader,
-    createProgram
+    createProgram,
+    enumerateUniforms,
+    enumerateAttributes,
+    getGlConstantNames,
+    gl,
+    Program
   }
 }
 

@@ -4,11 +4,14 @@ const webpack = require('webpack'); //to access built-in plugins
 module.exports = {
   devtool: 'cheap-module-source-map',
   module: {
-    rules: [
-      { test: /\.txt$/, use: 'raw-loader' }
-    ]
+    rules: [{
+      test: /\.txt$/,
+      use: 'raw-loader'
+    }]
   },
   plugins: [
-    new HtmlWebpackPlugin({template: './src/index.html'})
+    new HtmlWebpackPlugin({
+      template: './src/index.html'
+    })
   ]
 };
