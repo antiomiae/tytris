@@ -137,7 +137,7 @@ const api = gl => {
 
   /**
    * Constructs Vertex Array Object with each attribute
-   * @param {!WeGLlPogram} program
+   * @param {!WeGLPogram} program
    */
   const buildVao = (program) => {
 
