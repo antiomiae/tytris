@@ -166,36 +166,145 @@ const api = gl => {
       case (gl.INT_VEC4):
         return gl.INT
 
+      case (gl.UNSIGNED_INT):
+      case (gl.UNSIGNED_INT_VEC2):
+      case (gl.UNSIGNED_INT_VEC3):
+      case (gl.UNSIGNED_INT_VEC4):
+        return gl.UNSIGNED_INT
+
     }
+    throw `No component type for gl type ${glType}`
+
+  }
+
+  const getComponentSize = (glType) => {
+    switch (glType) {
+      case (gl.FLOAT):
+      case (gl.INT):
+      case (gl.UNSIGNED_INT):
+      case (gl.SHORT):
+      case (gl.UNSIGNED_SHORT):
+        return 1
+
+      case (gl.FLOAT_VEC2):
+      case (gl.INT_VEC2):
+      case (gl.UNSIGNED_INT_VEC2):
+        return 2
+
+      case (gl.FLOAT_VEC3):
+      case (gl.INT_VEC3):
+      case (gl.UNSIGNED_INT_VEC3):
+        return 3
+
+        // case (gl.FLOAT_MAT2):
+        //   return 4
+
+        // case (gl.FLOAT_MAT3):
+        //   return 9
+
+        // case (gl.FLOAT_MAT4):
+        //   return 16
+
+      case (gl.FLOAT_VEC4):
+      case (gl.INT_VEC4):
+      case (gl.UNSIGNED_INT_VEC4):
+        return 4
+
+    }
+
+    throw `No size for gl type ${glType} ${getGLConstantNames(glType)}`
+  }
+
+  const getArrayTypeForComponentType = (glType) => {
+    switch (glType) {
+      case (gl.FLOAT):
+        return Float32Array
+
+      case (gl.INT):
+        return Int32Array
+
+      case (gl.UNSIGNED_INT):
+        return Uint32Array
+
+      case (gl.SHORT):
+        return Int16Array
+
+      case (gl.UNSIGNED_SHORT):
+        return Uint16Array
+    }
+
+    throw `No array type for gl type ${glType}`
+  }
+
+  const getVertexAttribFuncForType = (glType) => {
+    switch (glType) {
+      case (gl.FLOAT):
+      case (gl.HALF_FLOAT):
+        return gl.vertexAttribPointer.bind(gl)
+
+      case (gl.INT):
+      case (gl.UNSIGNED_INT):
+      case (gl.SHORT):
+      case (gl.UNSIGNED_SHORT):
+      case (gl.BYTE):
+      case (gl.UNSIGNED_BYTE):
+        return gl.vertexAttribIPointer.bind(gl)
+    }
+
+    throw `No version of vertexAttribPointer defined for type ${glType}`
   }
 
   /**
    * Constructs Vertex Array Object with each attribute
    * @param {!Program} program
    */
-  const buildVao = (program) => {
-    const vao = gl.createVertexArray()
-    gl.bindVertexArray(vao)
-
-    const out = {
-      vao,
-      buffers: {}
+  class Vao {
+    constructor(program) {
+      this.program = program
+      this.buildVao()
+      this.allocateVertices(2000)
     }
 
-    Object.keys(program.attributes).forEach(attrName => {
-      const buffer = gl.createBuffer()
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+    buildVao() {
+      // maybe delete existing buffers here?
+      this.buffers = {}
 
-      const attribute = program.attributes[attrName]
-      console.log(`Attribute ${attrName} type = ${getGLConstantNames(attribute.type)}`)
+      if (this.vao) {
+        gl.deleteVertexArray(this.vao)
+      }
 
-      gl.enableVertexAttribArray(attribute.location)
-      gl.vertexAttribPointer(attribute.location, attribute.size, getComponentType(attribute.type), false, 0, 0)
+      this.vao = gl.createVertexArray()
+      gl.bindVertexArray(this.vao)
 
-      out.buffers[attrName] = buffer
-    });
+      Object.keys(this.program.attributes).forEach(attrName => {
+        const buffer = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
 
-    return out
+        const attribute = this.program.attributes[attrName]
+        console.log(`Attribute ${attrName} type = ${getGLConstantNames(attribute.type)}`)
+
+        const componentType = getComponentType(attribute.type)
+
+        gl.enableVertexAttribArray(attribute.location)
+        getVertexAttribFuncForType(componentType)(attribute.location, getComponentSize(attribute.type), componentType, false, 0, 0)
+
+        this.buffers[attrName] = {
+          buffer,
+          valueArrayType: getArrayTypeForComponentType(getComponentType(attribute.type)),
+          size: attribute.size,
+          type: attribute.type
+        }
+      })
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, null)
+      gl.bindVertexArray(null)
+    }
+
+    allocateVertices(count) {
+      Object.values(this.buffers).forEach((bufferObject) => {
+        bufferObject.valueArray = new bufferObject.valueArrayType(count * bufferObject.size)
+      })
+    }
   }
 
   return {
@@ -206,7 +315,7 @@ const api = gl => {
     getGLConstantNames,
     gl,
     Program,
-    buildVao
+    Vao
   }
 }
 

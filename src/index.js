@@ -25,11 +25,17 @@ const bootstrap = () => {
 
       in vec2 position;
       in vec2 tex_coord;
+      in uvec2 uvec2_param;
+      in ivec2 ivec2_param;
+      in vec4 vec4_param;
+      in mat4 mat4_param;
 
       uniform mat4 view_projection;
 
       void main() {
-          gl_Position = view_projection * vec4(position, 0, 1);
+          uint a = uvec2_param.x;
+          int b = ivec2_param.x + int(a) + int(vec4_param.x) + int(mat4_param);
+          gl_Position = view_projection * vec4(position, float(b), 1);
       }
       `,
     `
@@ -44,7 +50,7 @@ const bootstrap = () => {
       `
   )
 
-  const vao = api.buildVao(p)
+  const vao = new api.Vao(p)
   console.log(vao)
 }
 
