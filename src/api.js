@@ -96,6 +96,7 @@ const api = gl => {
         name: attribInfo.name,
         size: attribInfo.size,
         type: attribInfo.type,
+        componentType: getComponentType(attribInfo.type),
         location
       }
     }
