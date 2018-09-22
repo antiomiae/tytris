@@ -232,10 +232,9 @@ const api = gl => {
 
       case (gl.UNSIGNED_SHORT):
         return Uint16Array
-
       case (gl.BYTE):
         return Int8Array
-      
+
       case (gl.UNSIGNED_BYTE):
         return Uint8Array
     }
