@@ -91,13 +91,18 @@ const api = gl => {
     for (let i = 0; i < maxAttributes; i++) {
       const attribInfo = gl.getActiveAttrib(program, i)
       const location = gl.getAttribLocation(program, attribInfo.name)
+      const componentType = getComponentType(attribInfo.type)
+      const numComponents = getComponentSize(attribInfo.type)
+      const valueArrayType = getArrayTypeForComponentType(componentType)
 
       out[attribInfo.name] = {
         name: attribInfo.name,
         size: attribInfo.size,
         type: attribInfo.type,
-        componentType: getComponentType(attribInfo.type),
-        location
+        componentType,
+        valueArrayType,
+        location,
+        numComponents
       }
     }
 
@@ -268,7 +273,6 @@ const api = gl => {
     constructor(program) {
       this.program = program
       this.buildVao()
-      this.allocateVertices(2000)
     }
 
     buildVao() {
@@ -296,7 +300,6 @@ const api = gl => {
 
         this.buffers[attrName] = {
           buffer,
-          valueArrayType: getArrayTypeForComponentType(getComponentType(attribute.type)),
           size: attribute.size,
           type: attribute.type
         }
@@ -305,11 +308,99 @@ const api = gl => {
       gl.bindBuffer(gl.ARRAY_BUFFER, null)
       gl.bindVertexArray(null)
     }
+  }
 
-    allocateVertices(count) {
-      Object.values(this.buffers).forEach((bufferObject) => {
-        bufferObject.valueArray = new bufferObject.valueArrayType(count * bufferObject.size)
+  class VertexBatch {
+    constructor(attributes, maxVertices = 1000) {
+      this.arrays = {}
+      this.setters = {}
+      this.attributes = attributes
+      this.maxVertices = maxVertices
+
+      Object.values(this.attributes).forEach(attributeInfo => {
+        const numComponents = attributeInfo.numComponents
+        const attrName = attributeInfo.name
+
+        this.arrays[attrName] = new attributeInfo.valueArrayType(this.maxVertices * numComponents)
+
+        this.setters[attrName] = (v) => {
+          const baseIndex = this.currentVertex * numComponents
+          for (let i = 0; i < numComponents; i++) {
+            this.arrays[attrName][baseIndex + i] = v[i]
+          }
+        }
       })
+
+      this.reset()
+
+      this.attributeNames = Object.keys(this.arrays)
+    }
+
+    reset() {
+      this.currentVertex = 0
+    }
+
+    addVertex(obj) {
+      if (this.currentVertex >= this.maxVertices) {
+        throw `This vertex batch is full`
+      }
+
+      this.attributeNames.forEach(attrName => {
+        let val = null
+        if (val = obj[attrName]) {
+          this.setters[attrName](val)
+        }
+      })
+
+      this.currentVertex += 1
+
+      return this.currentVertex - 1
+    }
+
+    getVertices() {
+      return this.attributeNames.reduce((out, attrName) => {
+        out[attrName] = this.arrays[attrName].subarray(0, this.currentVertex * this.attributes[attrName].numComponents)
+        return out
+      }, {})
+    }
+  }
+
+  class IndexedVertexBatch extends VertexBatch {
+    /**
+     *
+     * @param {*} attributes
+     * @param {*} primitiveSize The number of vertices per primitive (triangle = 3, line = 2, point = 1)
+     */
+    constructor(attributes, primitiveSize = 3, maxPrimitives = 1000) {
+      super(attributes, primitiveSize * maxPrimitives)
+      this.indices = new Uint16Array(primitiveSize * maxPrimitives)
+      this.currentIndex = 0
+    }
+
+    addPrimitives(vertices, indices) {
+      const firstIndex = this.addVertices(vertices)
+      const shiftedIndices = indices.map(i => i + firstIndex)
+      for (let i = 0; i < shiftedIndices.length; i++) {
+        this.indices[i + this.currentIndex] = shiftedIndices[i]
+      }
+      this.currentIndex += shiftedIndices.length
+    }
+
+    addVertices(vertices) {
+      const firstIndex = this.addVertex(vertices[0])
+
+      if (vertices.length > 1) {
+        for (let i = 1; i < vertices.length; ++i) {
+          this.addVertex(vertices[i])
+        }
+      }
+
+      return firstIndex
+    }
+
+    reset() {
+      super.reset()
+      this.currentIndex = 0
     }
   }
 
@@ -321,7 +412,9 @@ const api = gl => {
     getGLConstantNames,
     gl,
     Program,
-    Vao
+    Vao,
+    VertexBatch,
+    IndexedVertexBatch
   }
 }
 

@@ -25,16 +25,14 @@ const bootstrap = () => {
 
       in vec2 position;
       in vec2 tex_coord;
-      in uvec2 uvec2_param;
-      in ivec2 ivec2_param;
-      in vec4 vec4_param;
+
+      out vec2 out_tex_coord;
 
       uniform mat4 view_projection;
 
       void main() {
-          uint a = uvec2_param.x;
-          int b = ivec2_param.x + int(a) + int(vec4_param.x);
-          gl_Position = view_projection * vec4(position, float(b), 1);
+          gl_Position = view_projection * vec4(position, 0, 1);
+          out_tex_coord = tex_coord;
       }
       `,
     `
@@ -51,6 +49,73 @@ const bootstrap = () => {
 
   const vao = new api.Vao(p)
   console.log(vao)
+
+  const vertexBatch = new api.VertexBatch(p.attributes)
+
+  vertexBatch.addVertex({
+    position: [0, 0],
+    tex_coord: [0, 0]
+  })
+
+  vertexBatch.addVertex({
+    position: [1, 1],
+    tex_coord: [1, 1]
+  })
+
+  vertexBatch.addVertex({
+    position: [1, 0],
+    tex_coord: [1, 0]
+  })
+
+  vertexBatch.addVertex({
+    position: [0, 1],
+    tex_coord: [0, 1]
+  })
+
+  const indexedVertexBatch = new api.IndexedVertexBatch(p.attributes, 3, 1000)
+
+  indexedVertexBatch.addPrimitives(
+    [{
+        position: [0, 0], // B L
+        tex_coord: [0, 0]
+      },
+      {
+        position: [1, 0], // B R
+        tex_coord: [1, 0]
+      },
+      {
+        position: [0, 1], // T L
+        tex_coord: [0, 1]
+      },
+      {
+        position: [1, 1], // T R
+        tex_coord: [1, 1]
+      }
+    ], [0, 1, 2, 3, 2, 1])
+
+  indexedVertexBatch.addPrimitives(
+    [{
+        position: [0, 0], // B L
+        tex_coord: [0, 0]
+      },
+      {
+        position: [1, 0], // B R
+        tex_coord: [1, 0]
+      },
+      {
+        position: [0, 1], // T L
+        tex_coord: [0, 1]
+      },
+      {
+        position: [1, 1], // T R
+        tex_coord: [1, 1]
+      }
+    ], [0, 1, 2, 3, 2, 1])
+
+  const data = indexedVertexBatch.getVertices()
+
+  console.log(indexedVertexBatch)
+  console.log(data)
 }
 
 window.onload = bootstrap
