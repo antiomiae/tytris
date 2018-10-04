@@ -48,7 +48,6 @@ const bootstrap = () => {
   )
 
   const vao = new api.Vao(p)
-  console.log(vao)
 
   const vertexBatch = new api.VertexBatch(p.attributes)
 
@@ -112,10 +111,8 @@ const bootstrap = () => {
       }
     ], [0, 1, 2, 3, 2, 1])
 
-  const data = indexedVertexBatch.getVertices()
-
-  console.log(indexedVertexBatch)
-  console.log(data)
+  api.drawBatch(indexedVertexBatch, vao)
+  api.logErrors()
 }
 
 window.onload = bootstrap

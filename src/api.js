@@ -279,12 +279,12 @@ const api = gl => {
       // maybe delete existing buffers here?
       this.buffers = {}
 
-      if (this.vao) {
-        gl.deleteVertexArray(this.vao)
+      if (this._glVao) {
+        gl.deleteVertexArray(this._glVao)
       }
 
-      this.vao = gl.createVertexArray()
-      gl.bindVertexArray(this.vao)
+      this._glVao = gl.createVertexArray()
+      gl.bindVertexArray(this._glVao)
 
       Object.keys(this.program.attributes).forEach(attrName => {
         const buffer = gl.createBuffer()
@@ -299,14 +299,42 @@ const api = gl => {
         getVertexAttribFuncForType(componentType)(attribute.location, getComponentSize(attribute.type), componentType, false, 0, 0)
 
         this.buffers[attrName] = {
+          name: attrName,
           buffer,
           size: attribute.size,
           type: attribute.type
         }
       })
 
+      this.indexBuffer = gl.createBuffer()
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer)
+
       gl.bindBuffer(gl.ARRAY_BUFFER, null)
       gl.bindVertexArray(null)
+    }
+
+    bind() {
+      gl.bindVertexArray(this._glVao)
+    }
+
+    unbind() {
+      gl.bindVertexArray(null)
+    }
+
+    loadBatch(batch) {
+      const vertices = batch.getVertices()
+
+      this.bind()
+
+      for (let bufferObj of Object.values(this.buffers)) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, bufferObj.buffer)
+        gl.bufferData(gl.ARRAY_BUFFER, vertices[bufferObj.name], gl.STREAM_DRAW)
+      }
+
+      if (typeof batch == IndexedVertexBatch) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer)
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, batch.getIndices(), gl.STREAM_DRAW)
+      }
     }
   }
 
@@ -375,12 +403,25 @@ const api = gl => {
       super(attributes, primitiveSize * maxPrimitives)
       this.indices = new Uint16Array(primitiveSize * maxPrimitives)
       this.currentIndex = 0
+
+      switch (primitiveSize) {
+        case 3:
+          this.glPrimitive = gl.TRIANGLES
+          break
+        case 2:
+          this.primitiveSize = gl.LINES
+          break
+        case 1:
+          this.primitiveSize = gl.POINTS
+          break
+      }
+
     }
 
     addPrimitives(vertices, indices) {
       const firstIndex = this.addVertices(vertices)
       const shiftedIndices = indices.map(i => i + firstIndex)
-      for (let i = 0; i < shiftedIndices.length; i++) {
+      for (let i = 0; i < shiftedIndices.length; ++i) {
         this.indices[i + this.currentIndex] = shiftedIndices[i]
       }
       this.currentIndex += shiftedIndices.length
@@ -402,6 +443,24 @@ const api = gl => {
       super.reset()
       this.currentIndex = 0
     }
+
+    getIndices() {
+      return this.indices.subarray(0, this.currentIndex)
+    }
+  }
+
+  const drawBatch = (batch, vao) => {
+    vao.loadBatch(batch)
+    if (typeof batch == IndexedVertexBatch) {
+      gl.drawElements(batch.glPrimitive, batch.currentIndex, gl.UNSIGNED_SHORT, 0)
+    }
+  }
+
+  const logErrors = () => {
+    let err;
+    while ((err = gl.getError()) != gl.NO_ERROR) {
+      console.log(`glError = ${err}`)
+    }
   }
 
   return {
@@ -414,7 +473,9 @@ const api = gl => {
     Program,
     Vao,
     VertexBatch,
-    IndexedVertexBatch
+    IndexedVertexBatch,
+    drawBatch,
+    logErrors
   }
 }
 
