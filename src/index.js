@@ -31,7 +31,7 @@ const bootstrap = () => {
       uniform mat4 view_projection;
 
       void main() {
-          gl_Position = view_projection * vec4(position, 0, 1);
+          gl_Position = vec4(position, 0, 1);
           out_tex_coord = tex_coord;
       }
       `,
@@ -111,6 +111,7 @@ const bootstrap = () => {
       }
     ], [0, 1, 2, 3, 2, 1])
 
+  p.bind()
   api.drawBatch(indexedVertexBatch, vao)
   api.logErrors()
 }

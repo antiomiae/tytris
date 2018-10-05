@@ -144,8 +144,14 @@ const api = gl => {
       if (!this.uniforms[name]) {
         throw `Program: No active uniform named ${name} in program`
       }
+    }
 
+    bind() {
+      gl.useProgram(this._glProgram)
+    }
 
+    unbind() {
+      gl.useProgram(null)
     }
   }
 
@@ -451,6 +457,7 @@ const api = gl => {
 
   const drawBatch = (batch, vao) => {
     vao.loadBatch(batch)
+    vao.bind()
     if (typeof batch == IndexedVertexBatch) {
       gl.drawElements(batch.glPrimitive, batch.currentIndex, gl.UNSIGNED_SHORT, 0)
     }
