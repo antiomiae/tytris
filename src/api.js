@@ -337,7 +337,7 @@ const api = gl => {
         gl.bufferData(gl.ARRAY_BUFFER, vertices[bufferObj.name], gl.STREAM_DRAW)
       }
 
-      if (typeof batch == IndexedVertexBatch) {
+      if (batch instanceof IndexedVertexBatch) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer)
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, batch.getIndices(), gl.STREAM_DRAW)
       }
@@ -458,7 +458,7 @@ const api = gl => {
   const drawBatch = (batch, vao) => {
     vao.loadBatch(batch)
     vao.bind()
-    if (typeof batch == IndexedVertexBatch) {
+    if (batch instanceof IndexedVertexBatch) {
       gl.drawElements(batch.glPrimitive, batch.currentIndex, gl.UNSIGNED_SHORT, 0)
     }
   }
