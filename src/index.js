@@ -19,33 +19,7 @@ const bootstrap = () => {
   // Clear the color buffer with specified clear color
   gl.clear(gl.COLOR_BUFFER_BIT)
 
-  const p = new api.Program(
-    `
-      #version 300 es
-
-      in vec2 position;
-      in vec2 tex_coord;
-
-      out vec2 out_tex_coord;
-
-      uniform mat4 view_projection;
-
-      void main() {
-          gl_Position = vec4(position, 0, 1);
-          out_tex_coord = tex_coord;
-      }
-      `,
-    `
-      #version 300 es
-      precision mediump float;
-
-      out vec4 outColor;  // you can pick any name
-
-      void main() {
-         outColor = vec4(1, 1, 1, 1);
-      }
-      `
-  )
+  const p = new api.Program(require('./shaders/basic.vert.glsl'), require('./shaders/basic.frag.glsl'))
 
   const vao = new api.Vao(p)
 

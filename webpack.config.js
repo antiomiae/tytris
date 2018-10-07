@@ -5,7 +5,7 @@ module.exports = {
   devtool: 'cheap-module-source-map',
   module: {
     rules: [{
-      test: /\.txt$/,
+      test: /\.(txt|frag|vert|glsl|glslx)$/,
       use: 'raw-loader'
     }]
   },
