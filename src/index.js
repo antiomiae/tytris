@@ -19,11 +19,11 @@ const bootstrap = () => {
   // Clear the color buffer with specified clear color
   gl.clear(gl.COLOR_BUFFER_BIT)
 
-  const p = new api.Program(require('./shaders/basic.vert.glsl'), require('./shaders/basic.frag.glsl'))
+  const program = new api.Program(require('./shaders/basic.vert.glsl'), require('./shaders/basic.frag.glsl'))
 
-  const vao = new api.Vao(p)
+  const vao = new api.Vao(program)
 
-  const vertexBatch = new api.VertexBatch(p.attributes)
+  const vertexBatch = new api.VertexBatch(program.attributes)
 
   vertexBatch.addVertex({
     position: [0, 0],
@@ -45,7 +45,7 @@ const bootstrap = () => {
     tex_coord: [0, 1]
   })
 
-  const indexedVertexBatch = new api.IndexedVertexBatch(p.attributes, 3, 1000)
+  const indexedVertexBatch = new api.IndexedVertexBatch(program.attributes, 3, 1000)
 
   indexedVertexBatch.addPrimitives(
     [{
@@ -85,7 +85,7 @@ const bootstrap = () => {
       }
     ], [0, 1, 2, 3, 2, 1])
 
-  p.bind()
+  program.bind()
   api.drawBatch(indexedVertexBatch, vao)
   api.logErrors()
 }
