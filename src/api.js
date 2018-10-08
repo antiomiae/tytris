@@ -463,6 +463,12 @@ const api = gl => {
     }
   }
 
+  class Texture {
+    constructor(type, format) {
+
+    }
+  }
+
   const logErrors = () => {
     let err;
     while ((err = gl.getError()) != gl.NO_ERROR) {
