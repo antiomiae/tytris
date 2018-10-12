@@ -88,6 +88,8 @@ const bootstrap = () => {
   program.bind()
   api.drawBatch(indexedVertexBatch, vao)
   api.logErrors()
+
+  const t = new api.Texture(api.gl.RED_INTEGER, api.gl.UNSIGNED_INT, api.gl.R32UI)
 }
 
 window.onload = bootstrap

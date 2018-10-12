@@ -464,8 +464,36 @@ const api = gl => {
   }
 
   class Texture {
-    constructor(type, format) {
+    static componentsForFormat(format) {
+      switch (format) {
+        case gl.RED:
+        case gl.RED_INTEGER:
+          1
+          break
+        case gl.RG:
+        case gl.RG_INTEGER:
+          2
+          break
+        case gl.RGA:
+        case gl.RGA_INTEGER:
+          3
+          break
+        case gl.RGBA:
+        case gl.RGBA_INTEGER:
+          4
+          break
+      } 
+    }
 
+    constructor(format, type, internalFormat) {
+      this.type = type
+      this.format = format
+      this.internalFormat = internalFormat
+      this.bufferType = getArrayTypeForComponentType(this.type)
+      this.components = Texture.componentsForFormat(this.format)
+
+      this.width = 0
+      this.height = 0
     }
   }
 
@@ -487,6 +515,7 @@ const api = gl => {
     Vao,
     VertexBatch,
     IndexedVertexBatch,
+    Texture,
     drawBatch,
     logErrors
   }
